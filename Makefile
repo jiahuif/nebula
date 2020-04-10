@@ -1,6 +1,8 @@
 NEBULA_CMD_PATH = "./cmd/nebula"
 BUILD_NUMBER ?= dev+$(shell date -u '+%Y%m%d%H%M%S')
 GO111MODULE = on
+GO_ARGS =
+
 export GO111MODULE
 
 ALL_LINUX = linux-amd64 \
@@ -32,12 +34,12 @@ bin-darwin: build/darwin-amd64/nebula build/darwin-amd64/nebula-cert
 	mv $? .
 
 bin:
-	go build -trimpath -ldflags "-X main.Build=$(BUILD_NUMBER)" -o ./nebula ${NEBULA_CMD_PATH}
-	go build -trimpath -ldflags "-X main.Build=$(BUILD_NUMBER)" -o ./nebula-cert ./cmd/nebula-cert
+	go build $(GO_ARGS) -trimpath -ldflags "-X main.Build=$(BUILD_NUMBER)" -o ./nebula ${NEBULA_CMD_PATH}
+	go build $(GO_ARGS) -trimpath -ldflags "-X main.Build=$(BUILD_NUMBER)" -o ./nebula-cert ./cmd/nebula-cert
 
 install:
-	go install -trimpath -ldflags "-X main.Build=$(BUILD_NUMBER)" ${NEBULA_CMD_PATH}
-	go install -trimpath -ldflags "-X main.Build=$(BUILD_NUMBER)" ./cmd/nebula-cert
+	go install $(GO_ARGS) -trimpath -ldflags "-X main.Build=$(BUILD_NUMBER)" ${NEBULA_CMD_PATH}
+	go install $(GO_ARGS) -trimpath -ldflags "-X main.Build=$(BUILD_NUMBER)" ./cmd/nebula-cert
 
 build/%/nebula: .FORCE
 	GOOS=$(firstword $(subst -, , $*)) \
