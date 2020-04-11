@@ -149,8 +149,12 @@ func (u *udpConn) ListenOut(f *Interface) {
 		for i := 0; i < n; i++ {
 			udpAddr.IP = binary.BigEndian.Uint32(names[i][4:8])
 			udpAddr.Port = binary.BigEndian.Uint16(names[i][2:4])
-
-			f.readOutsidePackets(udpAddr, plaintext[:0], buffers[i][:msgs[i].Len], header, fwPacket, nb)
+			b, err := decryptOutside(buffers[i][:msgs[i].Len])
+			if err != nil {
+				l.WithError(err).Warn("failed to decrypt")
+				continue
+			}
+			f.readOutsidePackets(udpAddr, plaintext[:0], b, header, fwPacket, nb)
 		}
 	}
 }
@@ -208,6 +212,8 @@ func (u *udpConn) ReadMulti(msgs []rawMessage) (int, error) {
 
 func (u *udpConn) WriteTo(b []byte, addr *udpAddr) error {
 	var rsa unix.RawSockaddrInet4
+
+	b = encryptOutside(b)
 
 	//TODO: sometimes addr is nil!
 	rsa.Family = unix.AF_INET

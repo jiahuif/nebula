@@ -66,7 +66,7 @@ func (ua *udpAddr) Equals(t *udpAddr) bool {
 }
 
 func (uc *udpConn) WriteTo(b []byte, addr *udpAddr) error {
-	_, err := uc.UDPConn.WriteToUDP(b, &addr.UDPAddr)
+	_, err := uc.UDPConn.WriteToUDP(encryptOutside(b), &addr.UDPAddr)
 	return err
 }
 
@@ -91,7 +91,7 @@ type rawMessage struct {
 
 func (u *udpConn) ListenOut(f *Interface) {
 	plaintext := make([]byte, mtu)
-	buffer := make([]byte, mtu)
+	buffer := make([]byte, outsideMtu)
 	header := &Header{}
 	fwPacket := &FirewallPacket{}
 	udpAddr := &udpAddr{}
@@ -106,6 +106,10 @@ func (u *udpConn) ListenOut(f *Interface) {
 		}
 
 		udpAddr.UDPAddr = *rua
+		b, err := decryptOutside(buffer[:n])
+		if err != nil {
+			l.WithError(err).Error("failed to unpack")
+		}
 		f.readOutsidePackets(udpAddr, plaintext[:0], buffer[:n], header, fwPacket, nb)
 	}
 }

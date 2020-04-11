@@ -31,7 +31,7 @@ func (u *udpConn) PrepareRawMessages(n int) ([]rawMessage, [][]byte, [][]byte) {
 	names := make([][]byte, n)
 
 	for i := range msgs {
-		buffers[i] = make([]byte, mtu)
+		buffers[i] = make([]byte, outsideMtu)
 		names[i] = make([]byte, 0x1c) //TODO = sizeofSockaddrInet6
 
 		//TODO: this is still silly, no need for an array
