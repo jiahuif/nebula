@@ -55,6 +55,18 @@ func Main(configPath string, configTest bool, buildVersion string) {
 		}
 	})
 
+	err = configOutsideCipher(config)
+	if err != nil {
+		l.WithError(err).Error("failed to configure outside encryption")
+	}
+
+	config.RegisterReloadCallback(func(c *Config) {
+		err := configOutsideCipher(config)
+		if err != nil {
+			l.WithError(err).Error("failed to configure outside encryption")
+		}
+	})
+
 	// trustedCAs is currently a global, so loadCA operates on that global directly
 	trustedCAs, err = loadCAFromConfig(config)
 	if err != nil {

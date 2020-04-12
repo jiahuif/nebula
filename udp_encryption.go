@@ -4,18 +4,23 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/sha256"
-	"io"
-
+	"encoding/base64"
 	"golang.org/x/crypto/chacha20poly1305"
+	"io"
 )
 
 const outsideMtu = mtu + 128
+const defaultPassword = "nebula"
 
-var outsideCipher = mustCreateChacha20Cipher("nebula")
+var outsideCipher cipher.AEAD
+
+func createChacha20CipherByPassword(password string) (cipher.AEAD, error) {
+	key := sha256.Sum256([]byte(password))
+	return chacha20poly1305.NewX(key[:])
+}
 
 func mustCreateChacha20Cipher(password string) cipher.AEAD {
-	key := sha256.Sum256([]byte(password))
-	c, err := chacha20poly1305.NewX(key[:])
+	c, err := createChacha20CipherByPassword(password)
 	if err != nil {
 		panic(err)
 	}
@@ -23,18 +28,43 @@ func mustCreateChacha20Cipher(password string) cipher.AEAD {
 }
 
 func encryptOutside(buf []byte) []byte {
-	ns := outsideCipher.NonceSize()
-	out := make([]byte, ns+len(buf)+outsideCipher.Overhead())
+	currentCipher := outsideCipher
+	ns := currentCipher.NonceSize()
+	out := make([]byte, ns+len(buf)+currentCipher.Overhead())
 	nonce := out[:ns]
 	_, _ = rand.Read(nonce)
-	ct := outsideCipher.Seal(out[ns:ns], nonce, buf, nil)
+	ct := currentCipher.Seal(out[ns:ns], nonce, buf, nil)
 	return out[:ns+len(ct)]
 }
 
 func decryptOutside(buf []byte) ([]byte, error) {
-	ns := outsideCipher.NonceSize()
+	currentCipher := outsideCipher
+	ns := currentCipher.NonceSize()
 	if len(buf) < ns {
 		return nil, io.ErrUnexpectedEOF
 	}
-	return outsideCipher.Open(buf[ns:ns], buf[:ns], buf[ns:], nil)
+	return currentCipher.Open(buf[ns:ns], buf[:ns], buf[ns:], nil)
+}
+
+func configOutsideCipher(config *Config) error {
+	var newCipher cipher.AEAD
+	if keyEncoded := config.GetString("outside_encryption.key", ""); keyEncoded != "" {
+		key, err := base64.StdEncoding.DecodeString(keyEncoded)
+		if err != nil {
+			return err
+		}
+		newCipher, err = chacha20poly1305.NewX(key)
+		if err != nil {
+			return err
+		}
+	} else {
+		password := config.GetString("outside_encryption.password", defaultPassword)
+		var err error
+		newCipher, err = createChacha20CipherByPassword(password)
+		if err != nil {
+			return err
+		}
+	}
+	outsideCipher = newCipher
+	return nil
 }

@@ -122,6 +122,10 @@ punchy:
       #keys:
         #- "ssh public key string"
 
+outside_encryption:
+  key: UXWHCS6dwEZxJUZ6WO6iWSP3mEB621xeDJEMddKu9AQ=
+  password: nebula
+
 # Configure the private interface. Note: addr is baked into the nebula certificate
 tun:
   # Name of the device

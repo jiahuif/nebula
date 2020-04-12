@@ -7,6 +7,10 @@ import (
 	"golang.org/x/crypto/chacha20poly1305"
 )
 
+func init() {
+	outsideCipher = mustCreateChacha20Cipher(defaultPassword)
+}
+
 func TestEncryptDecrypt(t *testing.T) {
 	b := []byte("1145141919810")
 	ct := encryptOutside(b)
