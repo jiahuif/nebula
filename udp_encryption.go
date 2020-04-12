@@ -9,7 +9,7 @@ import (
 	"io"
 )
 
-const outsideMtu = mtu + 128
+const outsideMtu = mtu + 64
 const defaultPassword = "nebula"
 
 var outsideCipher cipher.AEAD
