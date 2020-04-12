@@ -5,8 +5,9 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
-	"golang.org/x/crypto/chacha20poly1305"
 	"io"
+
+	"golang.org/x/crypto/chacha20poly1305"
 )
 
 const outsideMtu = mtu + 64
